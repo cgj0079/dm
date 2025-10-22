@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>숫자 기억력 테스트</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <div class="text-center p-6 bg-white rounded-lg shadow-lg max-w-md w-full">
+    <h1 class="text-3xl font-bold mb-4">숫자 기억력 테스트</h1>
+    <p id="instructions" class="mb-4">숫자를 1초 동안 보여줄게요. 기억해서 입력하세요!</p>
+    <div id="numberDisplay" class="text-4xl font-mono mb-4 bg-gray-200 p-4 rounded hidden"></div>
+    <input id="userInput" type="text" class="border border-gray-300 p-2 rounded mb-4 w-full hidden" placeholder="숫자를 입력하세요">
+    <button id="startBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">시작</button>
+    <button id="submitBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 hidden">제출</button>
+    <p id="message" class="mt-4 text-lg font-semibold"></p>
+    <p id="timer" class="mt-2 text-red-500 hidden">남은 시간: 10초</p>
+    <p id="highScore" class="mt-4">최고 기록: 0자리</p>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const numberDisplay = document.getElementById('numberDisplay');
+    const userInput = document.getElementById('userInput');
+    const message = document.getElementById('message');
+    const timerDisplay = document.getElementById('timer');
+    const highScoreDisplay = document.getElementById('highScore');
+    let currentNumber = '';
+    let currentLevel = 3;
+    let highScore = localStorage.getItem('memoryHighScore') || 0;
+    highScoreDisplay.textContent = `최고 기록: ${highScore}자리`;
+    let inputTimer;
+    let timeLeft = 10;
+
+    function generateNumber(length) {
+      let num = '';
+      for (let i = 0; i < length; i++) {
+        num += Math.floor(Math.random() * 10);
+      }
+      return num;
+    }
+
+    function startRound() {
+      message.textContent = '';
+      message.classList.remove('text-green-500', 'text-red-500'); // 색 초기화
+      userInput.classList.add('hidden');
+      submitBtn.classList.add('hidden');
+      timerDisplay.classList.add('hidden');
+      currentNumber = generateNumber(currentLevel);
+      numberDisplay.textContent = currentNumber;
+      numberDisplay.classList.remove('hidden');
+      setTimeout(() => {
+        numberDisplay.classList.add('hidden');
+        userInput.classList.remove('hidden');
+        submitBtn.classList.remove('hidden');
+        userInput.value = '';
+        userInput.focus();
+        startInputTimer();
+      }, 1000);
+    }
+
+    function startInputTimer() {
+      timeLeft = 10;
+      timerDisplay.textContent = `남은 시간: ${timeLeft}초`;
+      timerDisplay.classList.remove('hidden');
+      inputTimer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = `남은 시간: ${timeLeft}초`;
+        if (timeLeft <= 0) {
+          clearInterval(inputTimer);
+          fail();
+        }
+      }, 1000);
+    }
+
+    function checkInput() {
+      clearInterval(inputTimer);
+      timerDisplay.classList.add('hidden');
+      message.classList.remove('text-green-500', 'text-red-500'); // 색 초기화
+
+      if (userInput.value === currentNumber) {
+        message.textContent = '성공!';
+        message.classList.add('text-green-500');
+        currentLevel++;
+        if (currentLevel - 1 > highScore) {
+          highScore = currentLevel - 1;
+          localStorage.setItem('memoryHighScore', highScore);
+          highScoreDisplay.textContent = `최고 기록: ${highScore}자리`;
+        }
+        setTimeout(startRound, 1000);
+      } else {
+        fail();
+      }
+    }
+
+    function fail() {
+      message.classList.remove('text-green-500', 'text-red-500'); // 색 초기화
+      message.textContent = '실패!';
+      message.classList.add('text-red-500');
+      userInput.classList.add('hidden');
+      submitBtn.classList.add('hidden');
+      startBtn.classList.remove('hidden');
+      currentLevel = 3;
+    }
+
+    startBtn.addEventListener('click', () => {
+      startBtn.classList.add('hidden');
+      currentLevel = 3;
+      startRound();
+    });
+
+    submitBtn.addEventListener('click', checkInput);
+    userInput.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') checkInput();
+    });
+  </script>
+
+</body>
+</html>
