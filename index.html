@@ -15,8 +15,16 @@
     }
   </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-  <div class="text-center p-6 bg-white rounded-lg shadow-lg max-w-md w-full">
+<body class="bg-gray-100 flex items-center justify-center h-screen relative">
+
+  <!-- 왼쪽 위: 랭킹표 -->
+  <div id="highScore" class="absolute top-4 left-4 w-60 bg-gray-50 p-4 rounded-lg shadow-inner">
+    <h2 class="text-lg font-bold mb-2 text-center text-gray-700">🏆 최고 기록 TOP 5 🏆</h2>
+    <div id="leaderboardList" class="space-y-2 text-gray-700 text-sm"></div>
+  </div>
+
+  <!-- 가운데: 게임 영역 -->
+  <div class="text-center p-6 bg-white rounded-lg shadow-lg w-full max-w-md">
     <h1 class="text-3xl font-bold mb-4">숫자 기억력 테스트</h1>
     <p id="instructions" class="mb-4">숫자를 1초 동안 보여줄게요. 기억해서 입력하세요!</p>
     <div id="numberDisplay" class="text-4xl font-mono mb-4 bg-gray-200 p-4 rounded hidden"></div>
@@ -25,12 +33,6 @@
     <button id="submitBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 hidden">제출</button>
     <p id="message" class="mt-4 text-lg font-semibold"></p>
     <p id="timer" class="mt-2 text-red-500 hidden">남은 시간: 10초</p>
-
-    <!-- 깔끔한 등수창 -->
-    <div id="highScore" class="mt-6 text-left bg-gray-50 p-4 rounded-lg shadow-inner hidden">
-      <h2 class="text-lg font-bold mb-2 text-center text-gray-700">🏆 최고 기록 TOP 5 🏆</h2>
-      <div id="leaderboardList" class="space-y-2 text-gray-700 text-sm"></div>
-    </div>
   </div>
 
   <script>
@@ -77,14 +79,16 @@
     }
 
     function startRound() {
-      highScoreBox.classList.add('hidden'); // 게임 시작하면 등수창 숨기기
+      highScoreBox.classList.add('hidden'); // 게임 시작하면 랭킹표 숨기기
       message.textContent = '';
       userInput.classList.add('hidden');
       submitBtn.classList.add('hidden');
       timerDisplay.classList.add('hidden');
+
       currentNumber = generateNumber(currentLevel);
       numberDisplay.textContent = currentNumber;
       numberDisplay.classList.remove('hidden');
+
       setTimeout(() => {
         numberDisplay.classList.add('hidden');
         userInput.classList.remove('hidden');
@@ -137,7 +141,7 @@
       saveHighScores();
       updateHighScoreDisplay();
 
-      highScoreBox.classList.remove('hidden'); // 게임이 끝나면 등수창 표시
+      highScoreBox.classList.remove('hidden'); // 게임 종료 시 랭킹표 다시 표시
       currentLevel = 3;
     }
 
@@ -152,5 +156,6 @@
       if (e.key === 'Enter') checkInput();
     });
   </script>
+
 </body>
 </html>
