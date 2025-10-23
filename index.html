@@ -1,11 +1,19 @@
 <!DOCTYPE html>
-
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>숫자 기억력 테스트</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
   <div class="text-center p-6 bg-white rounded-lg shadow-lg max-w-md w-full">
@@ -17,7 +25,12 @@
     <button id="submitBtn" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 hidden">제출</button>
     <p id="message" class="mt-4 text-lg font-semibold"></p>
     <p id="timer" class="mt-2 text-red-500 hidden">남은 시간: 10초</p>
-    <p id="highScore" class="mt-4">최고 기록: 0자리</p>
+
+    <!-- 깔끔한 등수창 -->
+    <div id="highScore" class="mt-6 text-left bg-gray-50 p-4 rounded-lg shadow-inner hidden">
+      <h2 class="text-lg font-bold mb-2 text-center text-gray-700">🏆 최고 기록 TOP 5 🏆</h2>
+      <div id="leaderboardList" class="space-y-2 text-gray-700 text-sm"></div>
+    </div>
   </div>
 
   <script>
@@ -27,25 +40,45 @@
     const userInput = document.getElementById('userInput');
     const message = document.getElementById('message');
     const timerDisplay = document.getElementById('timer');
-    const highScoreDisplay = document.getElementById('highScore');
+    const leaderboardList = document.getElementById('leaderboardList');
+    const highScoreBox = document.getElementById('highScore');
+
     let currentNumber = '';
     let currentLevel = 3;
-    let highScore = localStorage.getItem('memoryHighScore') || 0;
-    highScoreDisplay.textContent = `최고 기록: ${highScore}자리`;
+    let highScores = JSON.parse(localStorage.getItem('memoryHighScores') || '[]');
+
+    function saveHighScores() {
+      localStorage.setItem('memoryHighScores', JSON.stringify(highScores.slice(0,5)));
+    }
+
+    function updateHighScoreDisplay() {
+      leaderboardList.innerHTML = '';
+      if (highScores.length === 0) {
+        leaderboardList.innerHTML = '<p class="text-center text-gray-500">아직 기록이 없습니다.</p>';
+        return;
+      }
+      highScores.slice(0, 5).forEach((entry, i) => {
+        const div = document.createElement('div');
+        div.className = "flex justify-between bg-white px-3 py-2 rounded shadow-sm hover:bg-blue-50 fade-in";
+        div.innerHTML = `
+          <span class="font-semibold text-gray-700">${i + 1}위. ${entry.name}</span>
+          <span class="text-gray-600">${entry.score}자리</span>
+        `;
+        leaderboardList.appendChild(div);
+      });
+    }
+    updateHighScoreDisplay();
+
     let inputTimer;
     let timeLeft = 10;
 
     function generateNumber(length) {
-      let num = '';
-      for (let i = 0; i < length; i++) {
-        num += Math.floor(Math.random() * 10);
-      }
-      return num;
+      return Array.from({ length }, () => Math.floor(Math.random() * 10)).join('');
     }
 
     function startRound() {
+      highScoreBox.classList.add('hidden'); // 게임 시작하면 등수창 숨기기
       message.textContent = '';
-      message.classList.remove('text-green-500', 'text-red-500'); // 색 초기화
       userInput.classList.add('hidden');
       submitBtn.classList.add('hidden');
       timerDisplay.classList.add('hidden');
@@ -79,17 +112,10 @@
     function checkInput() {
       clearInterval(inputTimer);
       timerDisplay.classList.add('hidden');
-      message.classList.remove('text-green-500', 'text-red-500'); // 색 초기화
-
       if (userInput.value === currentNumber) {
         message.textContent = '성공!';
-        message.classList.add('text-green-500');
+        message.className = 'mt-4 text-green-600 font-bold';
         currentLevel++;
-        if (currentLevel - 1 > highScore) {
-          highScore = currentLevel - 1;
-          localStorage.setItem('memoryHighScore', highScore);
-          highScoreDisplay.textContent = `최고 기록: ${highScore}자리`;
-        }
         setTimeout(startRound, 1000);
       } else {
         fail();
@@ -97,12 +123,21 @@
     }
 
     function fail() {
-      message.classList.remove('text-green-500', 'text-red-500'); // 색 초기화
       message.textContent = '실패!';
-      message.classList.add('text-red-500');
+      message.className = 'mt-4 text-red-600 font-bold';
       userInput.classList.add('hidden');
       submitBtn.classList.add('hidden');
       startBtn.classList.remove('hidden');
+
+      let name = prompt('게임 오버! 이름(또는 별명)을 입력하세요:', '')?.trim() || '익명';
+      const scoreEntry = { name, score: currentLevel - 1, date: new Date().toISOString() };
+      highScores.push(scoreEntry);
+      highScores.sort((a, b) => b.score - a.score);
+      highScores = highScores.slice(0, 5);
+      saveHighScores();
+      updateHighScoreDisplay();
+
+      highScoreBox.classList.remove('hidden'); // 게임이 끝나면 등수창 표시
       currentLevel = 3;
     }
 
@@ -117,6 +152,5 @@
       if (e.key === 'Enter') checkInput();
     });
   </script>
-
 </body>
 </html>
